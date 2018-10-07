@@ -3,13 +3,13 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>com.data.trans</groupId>
-	<artifactId>transboot</artifactId>
+	<groupId>com.seally.trans</groupId>
+	<artifactId>seally-trans</artifactId>
 	<version>0.0.3-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
-	<name>transboot</name>
-	<description>transport data util</description>
+	<name>seally-trans</name>
+	<description>move data from mysql to es</description>
 
 	<parent>
 		<groupId>org.springframework.boot</groupId>
