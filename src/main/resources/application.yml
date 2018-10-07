@@ -1,0 +1,67 @@
+#一下关于数据库和es的相关配置已经修改为使用jar包启动时传入，打包该项目为jar后使用命令启动：java -jar xxx.jar --dbhost=192.168.0.98   --dbport=3306  --dbusername=dev_wygl   --dbpassword=dev_wygl   --eshost=192.168.0.104   --esport=9300  --esclustername=es_cluster
+#---------springboot配置信息---------
+server: 
+    port: 8088
+#---------mysql数据库配置信息---------
+spring: 
+    datasource:
+        name: myDataSource
+        type: com.alibaba.druid.pool.DruidDataSource  
+        url: jdbc:mysql://www.seally.cn:3306/dennis?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull
+        username: root
+        password: root
+        driverClassName: com.mysql.jdbc.Driver
+#---------druid连接池的配置信息 ---------
+        initialSize: 50  
+        minIdle: 50  
+        maxActive: 50  
+        maxWait: 60000  
+        timeBetweenEvictionRunsMillis: 60000  
+        minEvictableIdleTimeMillis: 300000  
+        validationQuery: SELECT 1 FROM DUAL
+        testWhileIdle: true  
+        testOnBorrow: false  
+        testOnReturn: false  
+        poolPreparedStatements: true  
+        maxPoolPreparedStatementPerConnectionSize: 20  
+        filters: stat,wall,log4j  
+        connectionProperties: druid.stat.mergeSql=true;druid.stat.slowSqlMillis=5000
+#---------模板引擎thymeleaf-----------
+    thymeleaf: 
+        cache: false
+        prefix: classpath:/templates
+        suffix: .html
+        encoding: UTF-8
+        content-type: text/html
+        mode: HTML5
+#---------Elastic的配置信息-----------
+elastic:
+    server:
+        host: www.seally.cn                            #es服务器ip
+        port: 9300                                       #es服务监听端口
+        clusterName: es_cluster                          #es服务集群名称
+    client:
+        pool: 
+            initialSize: 10
+            maxSize: 20
+            minSize: 8
+            maxWait: 6000
+        import:
+            index: wyglsystemlog                        #es服务器导入目标索引库
+            type: pblog                                 #es服务器导入目标索引库类型
+            bulkSize: 2000                              #每批提交到es导入的文档数
+#---------数据迁移线程池信息-----------
+#mysql数据库迁移数据表
+trans:
+    datasource:
+        table:
+            name: t_pb_log                              #mysql迁移目标表名
+            fetchSize: 10000                            #mysql数据库单次抓取数目  
+    thread:
+        pool:
+            size: 10                                    #数据迁移线程池容量（决定任务迁移拆分线程数据/任务数目）
+#mybatis集成配置
+mybatis: 
+    mapperLocations: classpath:mapper/*.xml             #mapper.xml文件路径
+    typeAliasesPackage: com.data.trans.model            #mybatis数据模型实体包路径
+    config: mybatis-config.xml                          #mybatis配置文件的路径

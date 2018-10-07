@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.seally.trans.mapper.TranslogMapper">
+	
+	<insert id="addTranslog" parameterType="com.seally.trans.model.Translog" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
+		insert into translog(trans_name,trans_table,all_between,all_count)
+		values(#{transName},#{transTable},#{allBetween},#{allCount})
+	</insert>
+	
+	<delete id="deleteTranslog" parameterType="com.seally.trans.model.Translog">
+		delete from translog where id = #{id}
+	</delete>
+	
+	<delete id="clearTranslog">
+		delete from translog
+	</delete>
+	
+	<sql id="update_body">
+		<set>
+			<if test="null != transName and transName != ''">trans_name=#{transName},</if>
+			<if test="null != transTable and transTable != ''">trans_table=#{transTable},</if>
+			<if test="null != allBetween and allBetween != ''">all_between=#{allBetween},</if>
+			<if test="null != allCount and allCount != ''">all_count=#{allCount},</if>
+			<if test="null != noneBetween and noneBetween != ''">none_between=#{noneBetween},</if>
+			<if test="null != sucBetween and sucBetween != ''">suc_between=#{sucBetween},</if>
+			<if test="null != sucCount and sucCount != ''">suc_count=#{sucCount}</if>
+		</set>
+	</sql>
+	
+	<update id="updateTranslogById" parameterType="com.seally.trans.model.Translog">
+		update translog
+		<include refid="update_body"/>
+		where id = #{id}
+	</update>
+	
+	<update id="updateTranslogByJobName" parameterType="com.seally.trans.model.Translog">
+		update translog
+		<include refid="update_body"/>
+		where trans_name = #{transName}
+	</update>
+	
+	<resultMap type="com.seally.trans.model.Translog" id="translog_map">
+		<id column="id" property="id"/>
+		<result column="trans_name" property="transName"/>
+		<result column="trans_table" property="transTable"/>
+		<result column="all_between" property="allBetween"/>
+		<result column="all_count" property="allCount"/>
+		<result column="none_between" property="noneBetween"/>
+		<result column="suc_between" property="sucBetween"/>
+		<result column="suc_count" property="sucCount"/>
+	</resultMap>
+	
+	<select id="getTranslogById" resultMap="translog_map">
+		select * from translog where id = #{id}
+	</select>
+	
+	<select id="getTranslogList" resultMap="translog_map" parameterType="com.seally.trans.model.Translog">
+		select * from translog
+		<where>
+			<if test="null != transName and transName != ''">and trans_name = #{transName}</if>
+			<if test="null != transTable and transTable != ''">and trans_table = #{transTable}</if>
+			<if test="null != allBetween and allBetween != ''">and all_between = #{allBetween}</if>
+			<if test="null != allCount and allCount != ''">and all_count = #{allCount}</if>
+			<if test="null != sucCount and sucCount != ''">and suc_count = #{sucCount}</if>
+		</where>
+	</select>
+	
+</mapper>

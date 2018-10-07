@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>控制台</title>
+<script th:src="@{js/sockjs.min.js}"></script>
+<script th:src="@{js/stomp.min.js}"></script>
+<script th:src="@{js/jquery-3.2.1.min.js}"></script>
+<script th:src="@{js/bootstrap.js}"></script>
+<script th:src="@{js/echarts.min.js}"></script>
+<link rel="stylesheet" th:href="@{css/bootstrap.min.css}" />
+<style type="text/css">
+	body{margin: 0px;padding: 0px;}
+	.chart{width: 100%;height:560px;border: 1px solid #C4C4C4;margin: 10px 0px;}
+	/* .connect-suc{background: url("images/active.gif");background-repeat: no-repeat;background-size: 32px 32px;}  */
+	.fail{background: gray;}
+</style>
+</head>
+<body>
+<div class="container-fluid">
+<div>
+	<img id="con0" alt="" th:src="@{images/active0.png}">
+	<img id="con1" alt="" th:src="@{images/active1.gif}" style="display: none;">
+	<a id="connect" href="#" onclick="connect();">手动连接</a>
+	<a id="disconnect" href="#" onclick="disconnect();">断开连接</a>
+	<a id="startTrans"  href="#" onclick="sendCmd(1,'');">启动迁移</a>
+	<a id="clear"  href="#" onclick="clearTranslog();" style="color: red;margin-left: 200px;">清空迁移记录</a>
+	<!-- <img id="con1" alt="" th:src="@{images/transing.gif}" > -->
+</div>
+<div class="row">
+  <!-- 左侧图表开始 -->
+  <div class="col-md-12">
+  	<!-- 图标容器 -->
+  	<div class="chart" id="chart-container"></div>
+  </div>
+  <!-- 左侧图表结束 -->
+  <!-- 右侧表格开始 -->
+  <div class="col-md-12">
+  	<div class="table-responsive">
+	  <table class="table table-bordered">
+	    <tr>
+			<!-- <th>序号</th> -->
+			<th>任务名称</th>
+			<th>转移ID区间</th>
+			<th>区间实际记录数</th>
+			<!-- <th>已转移/条</th>
+			<th>剩余/条</th> -->
+			<th>操作</th>
+		</tr>
+		<tr th:each="log: ${logs}">
+			<!-- <td th:text="${log.id}">主键</td> -->
+			<td th:text="${log.transName}">0</td>
+			<td th:text="${log.allBetween}">0</td>
+			<td th:text="${log.allCount}">0</td>
+			<!-- <td th:text="${log.sucCount}">0</td>
+			<td th:text="${log.allCount - log.sucCount}">0</td> -->
+			<td>
+				<a href="#" th:onclick="'javascript:sendCmd(2,\''+${log.id}+'\')'">重启</a>
+			</td>
+		</tr>
+	  </table>
+	</div>
+  </div>
+  <!-- 左侧表格结束 -->
+</div>
+</div>
+<!-- 脚本 -->
+<script th:inline="javascript">
+
+/* 初始化echarts实例开始 */
+var myChart = echarts.init(document.getElementById('chart-container'));
+var timer;//定时器
+// 指定图表的配置项和数据
+option = {
+	title: {
+	    text: '         MySQ -> Elasticssearch 数据迁移'
+	},
+    tooltip : {
+        trigger: 'axis',
+        axisPointer : {            // 坐标轴指示器，坐标轴触发有效
+            type : 'shadow'        // 默认为直线，可选为：'line' | 'shadow'
+        }
+    },
+    legend: {
+        data:['失败', '成功', '总计']
+    },
+    grid: {
+        left: '3%',
+        right: '4%',
+        bottom: '3%',
+        containLabel: true
+    },
+    xAxis : [
+        {
+            type : 'value'
+        }
+    ],
+    yAxis : [
+        {
+            type : 'category',
+            axisTick : {show: false},
+            data : []
+        }
+    ],
+    series : [
+        {
+            name:'成功',
+            type:'bar',
+            label: {
+                normal: {
+                    show: true,
+                    position: 'right'
+                }
+            },
+            data:[]
+        },
+        {
+            name:'总计',
+            type:'bar',
+            stack: '总计',
+            label: {
+                normal: {
+                    show: true,
+                    position: 'right'
+                }
+            },
+            data:[]
+        },
+        {
+            name:'失败',
+            type:'bar',
+            stack: '总计',
+            label: {
+                normal: {
+                    show: true,
+                    position: 'inside' //还可以配置：left、right（内部显示）
+                }
+            },
+            data:[]
+        }
+    ]
+};
+//使用刚指定的配置项和数据显示图表。
+myChart.setOption(option);
+/* 初始化echarts实例结束 */
+
+/* websocket相关开始 */
+//客户端
+var stompClient = null;
+//发送命令（连接建立成功后才可用）
+function sendCmd(cmd,data) {
+    stompClient.send("/myCmd", {}, JSON.stringify({'cmd': cmd,'data':data}));
+}
+//建立连接方法
+function connect() {
+    var socket = new SockJS('/myCmdEndpoint');
+    stompClient = Stomp.over(socket);
+    stompClient.connect({},
+    	//在连接成功的回调函数里面订阅服务器端的主体
+    	function () {
+	        //订阅 var subscription = client.subscribe("/queue/test", callback);
+	        stompClient.subscribe('/myTopic/myCmdInter', function (message) {
+	            useResponse(JSON.parse(message.body));
+	        });
+	        
+	        //连接成功的处理函数
+	        sucConnect();
+	        
+	    },
+	    //异常断开连接后的回调
+	    function(err){
+	    	//这里可以做断开后的处理逻辑
+	    	closeConnect();
+	    }
+    );
+}
+//主动断开连接
+function disconnect() {
+    if (stompClient != null) {
+        stompClient.disconnect();
+        closeConnect();
+    }
+}
+/* websocket相关结束 */
+
+//连接成功后的业务处理
+function sucConnect(){
+	timer = window.setInterval(function(){
+   	 //发送数据刷新请求
+       sendCmd(5,"");
+   },3000);
+   
+   //更新连接a标签值
+   $("#connect").hide();
+   $("#con1").show();
+   $("#con0").hide();
+   $("#startTrans").show();
+   $("#disconnect").show();
+}
+
+//连接断开后的业务处理
+function closeConnect(){
+	//更新连接a标签值
+   $("#connect").show();
+   $("#con0").show();
+   $("#con1").hide();
+   $("#disconnect").hide();
+   $("#startTrans").hide();
+   $("#connect").show();
+	window.clearInterval(timer);
+}
+
+//收到服务器消息处理
+function useResponse(message) {
+	//数据刷新请求回复
+	if(message.code==200 && message.cmd==5){
+		refreshChart(message.data);
+	}
+	//全局整体任务转换记录表生成结束
+	if(message.code==200 && message.cmd==100){
+		window.location.reload();
+	}
+	//全局整体任务转换已经完成,关闭连接
+	if(message.code==200 && message.cmd==101){
+		//disconnect();
+	}
+	//局部手动启动子任务转换完成
+	if(message.code==200 && message.cmd== 6){
+		//子任务完成推送
+		alert("清理转移记录表成功！页面3秒后自动刷新！");
+		window.setTimeout(function(){
+		   	 //发送数据刷新请求
+			location.reload();
+		},3000);
+	}
+}
+
+//刷新图表
+function refreshChart(echartsModel){
+	//修改必要显示数据项
+	option.yAxis[0].data = echartsModel.yAxisData;
+	$.each( option.series, function(i, element){
+		if(element.name == "总计"){
+			element.data = echartsModel.seriesDataTotal;
+		}else if(element.name == "成功"){
+			element.data = echartsModel.seriesDataSuccess;
+		}else if(element.name == "失败"){
+			element.data = echartsModel.seriesDataFail;
+		}
+	});
+	//设置数据项刷新图表
+	myChart.setOption(option);
+}
+
+//页面加载完成
+$(function(){
+	//开始建立连接
+	connect();
+	
+});
+
+//清空转移记录
+function clearTranslog(){
+	if(confirm("确定清空么。清空后转移记录将不存在，如果不同时清空es中已经转移的数据，再次启动会转移进去重复数据！")){
+		sendCmd(6,'');	
+	}
+}
+
+</script>
+</body>
+</html>
