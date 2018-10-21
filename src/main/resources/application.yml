@@ -55,7 +55,7 @@ elastic:
 trans:
     datasource:
         table:
-            name: t_pb_log                              #mysql迁移目标表名
+            name: systemlog                              #mysql迁移目标表名
             fetchSize: 10000                            #mysql数据库单次抓取数目  
     thread:
         pool:
