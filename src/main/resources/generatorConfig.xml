@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE generatorConfiguration PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN" "http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd">
+<generatorConfiguration>
+	<!-- mysql驱动jar包地址：根据实际情况修改 -->
+	<classPathEntry location="D:\apache-maven-3.3.9\dncRepository\mysql\mysql-connector-java\5.1.44\mysql-connector-java-5.1.44.jar" />
+	
+	<!-- 生成基础信息配置 -->
+	<context id="DB2Tables" targetRuntime="MyBatis3">
+		<commentGenerator>
+			<property name="suppressDate" value="true" />
+			<property name="suppressAllComments" value="true" />
+		</commentGenerator>
+		
+		<!-- 目标表数据库连接信息：根据实际情况修改 -->
+		<jdbcConnection driverClass="com.mysql.jdbc.Driver"
+			connectionURL="jdbc:mysql://localhost:3306/yc_test?tinyInt1isBit=false"
+			userId="root" 
+			password="root">
+		</jdbcConnection>
+	
+		<!-- 配置特殊数据库colume类型与pojo属性转换 -->
+		<javaTypeResolver>
+			<property name="forceBigDecimals" value="false" />
+			<property name="tinyInt1isBit" value="false" />
+		</javaTypeResolver>
+		
+		<!-- 配置生成实体包路径、实体包的工程绝对前缀路径 -->
+		<javaModelGenerator 
+			targetPackage="com.seally.trans.model"
+			targetProject="E:\selfGitHubReposity\seally-trans\src\main\java">
+			<property name="enableSubPackages" value="true" />
+			<property name="trimStrings" value="true" />
+		</javaModelGenerator>
+	
+		<!-- 配置生成mapper接口对应xml文件的包路径、mapper接口对应xml文件的的工程绝对前缀路径 -->
+		<sqlMapGenerator 
+			targetPackage="mapper"
+			targetProject="E:\selfGitHubReposity\seally-trans\src\main\resources">
+			<property name="enableSubPackages" value="true" />
+		</sqlMapGenerator>
+	
+		<!-- 配置生成mapper接口的包路径、mapper接口的的工程绝对前缀路径 -->
+		<javaClientGenerator type="XMLMAPPER"
+			targetPackage="com.seally.trans.mapper"
+			targetProject="E:\selfGitHubReposity\seally-trans\src\main\java">
+			<property name="enableSubPackages" value="true" />
+		</javaClientGenerator>
+		
+		
+		<!-- 配置目标表 -->
+		<table tableName="testlog" domainObjectName="TestLog"
+			enableCountByExample="false" enableUpdateByExample="false"
+			enableDeleteByExample="false" enableSelectByExample="false"
+			selectByExampleQueryId="false">
+			<property name="useActualColumnNames" value="false" />
+		</table>
+		
+		<!-- 其它需要配置的目标表一次添加即可..... -->
+		
+		<!-- 使用方法：配置完毕，工程右键 Run as 选择 Maven build...  Goals输入：mybatis-generator:generate 执行 run 按钮即可 -->
+	</context>
+</generatorConfiguration>
